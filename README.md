@@ -7,7 +7,7 @@ Info
 -------
 Started January, 2013 by Glen Hocky
 
-Based on the C++ vmdstream library by Aaron Key - [https://github.com/askeys/vmdstream](https://github.com/askeys/vmdstream)
+Based on the C++ vmdstream library by Aaron S. Keys - [https://github.com/askeys/vmdstream](https://github.com/askeys/vmdstream)
 
 Authors
 -------
