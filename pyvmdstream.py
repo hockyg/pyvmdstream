@@ -100,7 +100,8 @@ class VMDStream():
 
     def draw_atomic( self, configuration, atomtypes=None, default_radius=0.5,
                      radii=None, radius_list=None, color_list=None,
-                     color_value_list=None,sphere_resolution=30):
+                     color_value_list=None,sphere_resolution=30,
+                     connecting_segments_types=None):
         """
         
             This is an example function for drawing an atomic configuration.
@@ -121,6 +122,9 @@ class VMDStream():
                 Color value       - Specify the color of each atom in a numpy
                                       array of length N floats in the range 0-1
                 Sphere resolution - VMD sphere resolution, integer
+                Connecting
+                    Segments Types - Connect atomic coordinates of types in this
+                                       list with cylinders if the same type
 
         """
         natoms = len(configuration)
@@ -151,6 +155,11 @@ class VMDStream():
                 this_radius = default_radius
     
             self.s.send("draw sphere {%f %f %f} radius %f resolution %i\n"%( configuration[i,0],configuration[i,1],configuration[i,2],this_radius,sphere_resolution) )
+            if i+1<len(configuration) and connecting_segments_types is not None:
+                for connecting_segments_type in connecting_segments_types:
+                    if atomtypes[i] == connecting_segments_type and atomtypes[i+1] == connecting_segments_type:
+                        self.s.send("draw cylinder {%f %f %f} {%f %f %f} radius %f resolution %i filled yes\n"%( configuration[i,0],configuration[i,1],configuration[i,2],configuration[i+1,0],configuration[i+1,1],configuration[i+1,2],this_radius*0.5,sphere_resolution) )
+ 
 
         self.s.send('display resetview\n')
         self.s.send('scale by 1.3\n')
@@ -181,7 +190,8 @@ class VMDStream():
 
     def render_tachyon(self,file_prefix="test_frame"):
         """ Render file via tachyon with current VMD defaults """
-        self.s.send('render Tachyon %(FILE_PREFIX)s "/usr/local/lib/vmd/tachyon_LINUXAMD64" -aasamples 12 %%s -format TARGA -o %%s.tga\n'%{'FILE_PREFIX':file_prefix+'.dat'})
+        #self.s.send('render Tachyon %(FILE_PREFIX)s "/usr/local/lib/vmd/tachyon_LINUXAMD64" -aasamples 12 %%s -format TARGA -o %%s.tga\n'%{'FILE_PREFIX':file_prefix+'.dat'})
+        self.s.send('render Tachyon %(FILE_PREFIX)s "tachyon" -aasamples 12 %%s -format TARGA -o %%s.tga\n'%{'FILE_PREFIX':file_prefix+'.dat'})
 
 def ctl_script(port):
     """
@@ -307,13 +317,13 @@ def vmdstart(command_script="remote_ctl.tcl",port=5555):
     """
     open(command_script,'w').write( ctl_script(port) )
     cmd = subprocess.Popen("vmd -e "+command_script,shell=True)
-    time.sleep(1)
+    time.sleep(2)
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     for i in range(5):
         try:
 	    s.connect(("127.0.0.1",port))
         except Exception, e:
-            if e.errno == 106:
+            if e.errno == 106 or e.errno == 56:
                 #already connected
                 break
             else:
