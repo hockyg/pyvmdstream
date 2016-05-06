@@ -101,7 +101,7 @@ class VMDStream():
     def draw_atomic( self, configuration, atomtypes=None, default_radius=0.5,
                      radii=None, radius_list=None, color_list=None,
                      color_value_list=None,sphere_resolution=30,
-                     connecting_segments_types=None):
+                     connecting_segments_types=None, reset_view=True):
         """
         
             This is an example function for drawing an atomic configuration.
@@ -125,6 +125,7 @@ class VMDStream():
                 Connecting
                     Segments Types - Connect atomic coordinates of types in this
                                        list with cylinders if the same type
+                Reset view        - recenter view every time step (True/False)
 
         """
         natoms = len(configuration)
@@ -161,8 +162,9 @@ class VMDStream():
                         self.s.send("draw cylinder {%f %f %f} {%f %f %f} radius %f resolution %i filled yes\n"%( configuration[i,0],configuration[i,1],configuration[i,2],configuration[i+1,0],configuration[i+1,1],configuration[i+1,2],this_radius*0.5,sphere_resolution) )
  
 
-        self.s.send('display resetview\n')
-        self.s.send('scale by 1.3\n')
+        if reset_view is True:
+            self.s.send('display resetview\n')
+            self.s.send('scale by 1.3\n')
 
     def set_colorscale(self,colormap="jet",ncolors=VMDNCOLORS,startcolorid=VMDSTARTCOLOR):
         """
@@ -191,7 +193,8 @@ class VMDStream():
     def render_tachyon(self,file_prefix="test_frame"):
         """ Render file via tachyon with current VMD defaults """
         #self.s.send('render Tachyon %(FILE_PREFIX)s "/usr/local/lib/vmd/tachyon_LINUXAMD64" -aasamples 12 %%s -format TARGA -o %%s.tga\n'%{'FILE_PREFIX':file_prefix+'.dat'})
-        self.s.send('render Tachyon %(FILE_PREFIX)s "tachyon" -aasamples 12 %%s -format TARGA -o %%s.tga\n'%{'FILE_PREFIX':file_prefix+'.dat'})
+        #self.s.send('render Tachyon %(FILE_PREFIX)s "tachyon" -aasamples 12 %%s -format TARGA -o %%s.tga\n'%{'FILE_PREFIX':file_prefix+'.dat'})
+        self.s.send('render Tachyon %(FILE_PREFIX)s "/software/vmd-1.9.2-x86_64/lib/tachyon_LINUXAMD64" -aasamples 12 %%s -format TARGA -o %%s.tga\n'%{'FILE_PREFIX':file_prefix+'.dat'})
 
 def ctl_script(port):
     """
@@ -317,7 +320,7 @@ def vmdstart(command_script="remote_ctl.tcl",port=5555):
     """
     open(command_script,'w').write( ctl_script(port) )
     cmd = subprocess.Popen("vmd -e "+command_script,shell=True)
-    time.sleep(2)
+    time.sleep(5)
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     for i in range(5):
         try:
@@ -328,7 +331,7 @@ def vmdstart(command_script="remote_ctl.tcl",port=5555):
                 break
             else:
                 print e
-        time.sleep(1)
+        time.sleep(2)
     return s
 
 def vmdstop(s):
