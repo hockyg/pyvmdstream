@@ -101,7 +101,7 @@ class VMDStream():
     def draw_atomic( self, configuration, atomtypes=None, default_radius=0.5,
                      radii=None, radius_list=None, color_list=None,
                      color_value_list=None,sphere_resolution=30,
-                     connecting_segments_types=None, reset_view=True):
+                     connecting_segments_types=None, cylinder_radius_fraction=0.5, reset_view=True):
         """
         
             This is an example function for drawing an atomic configuration.
@@ -125,6 +125,9 @@ class VMDStream():
                 Connecting
                     Segments Types - Connect atomic coordinates of types in this
                                        list with cylinders if the same type
+                Cylinder radius 
+                    fraction      - Fraction of bead size for cylinder radius
+                                     (default: 0.5)
                 Reset view        - recenter view every time step (True/False)
 
         """
@@ -159,7 +162,7 @@ class VMDStream():
             if i+1<len(configuration) and connecting_segments_types is not None:
                 for connecting_segments_type in connecting_segments_types:
                     if atomtypes[i] == connecting_segments_type and atomtypes[i+1] == connecting_segments_type:
-                        self.s.send("draw cylinder {%f %f %f} {%f %f %f} radius %f resolution %i filled yes\n"%( configuration[i,0],configuration[i,1],configuration[i,2],configuration[i+1,0],configuration[i+1,1],configuration[i+1,2],this_radius*0.5,sphere_resolution) )
+                        self.s.send("draw cylinder {%f %f %f} {%f %f %f} radius %f resolution %i filled yes\n"%( configuration[i,0],configuration[i,1],configuration[i,2],configuration[i+1,0],configuration[i+1,1],configuration[i+1,2],this_radius*cylinder_radius_fraction,sphere_resolution) )
  
 
         if reset_view is True:
