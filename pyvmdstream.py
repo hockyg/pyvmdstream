@@ -210,11 +210,11 @@ class VMDStream():
                 # set color startcolor+i to r g b value
                 self.s.send("color change rgb %i %0.3f %0.3f %0.3f\n"%( startcolorid+i,color_vals[0],color_vals[1],color_vals[2]) )
 
-    def render_tachyon(self,file_prefix="test_frame"):
+    def render_tachyon(self,file_prefix="test_frame",extra_commands=""):
         """ Render file via tachyon with current VMD defaults """
         #self.s.send('render Tachyon %(FILE_PREFIX)s "/usr/local/lib/vmd/tachyon_LINUXAMD64" -aasamples 12 %%s -format TARGA -o %%s.tga\n'%{'FILE_PREFIX':file_prefix+'.dat'})
         #self.s.send('render Tachyon %(FILE_PREFIX)s "tachyon" -aasamples 12 %%s -format TARGA -o %%s.tga\n'%{'FILE_PREFIX':file_prefix+'.dat'})
-        self.s.send('render Tachyon %(FILE_PREFIX)s "/software/vmd-1.9.2-x86_64/lib/tachyon_LINUXAMD64" -aasamples 12 %%s -format TARGA -o %%s.tga\n'%{'FILE_PREFIX':file_prefix+'.dat'})
+        self.s.send('render Tachyon %(FILE_PREFIX)s "/software/vmd-1.9.2-x86_64/lib/tachyon_LINUXAMD64" %(EXTRA_COMMANDS)s -aasamples 12 %%s -format TARGA -o %%s.tga\n'%{'FILE_PREFIX':file_prefix+'.dat','EXTRA_COMMANDS':extra_commands})
 
 def ctl_script(port):
     """
