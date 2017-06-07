@@ -80,7 +80,7 @@ class VMDStream():
             See examples/draw_test for complete and working usage examples.
 
     """
-    def __init__(self,command_script="remote_ctl.tcl",port=5555):
+    def __init__(self,command_script="remote_ctl.tcl",port=5555,vmd_exe="vmd"):
         """
 
             Called when a new VMDStream object is created.
@@ -88,7 +88,7 @@ class VMDStream():
               VMD on port 'port'
 
         """
-        self.s = vmdstart(command_script,port)
+        self.s = vmdstart(command_script,port,vmd_exe)
 
     def close(self):
         """ Close the connection to VMD """
@@ -101,7 +101,7 @@ class VMDStream():
     def draw_atomic( self, configuration, atomtypes=None, default_radius=0.5,
                      radii=None, radius_list=None, color_list=None,
                      color_value_list=None,sphere_resolution=30,
-                     connecting_segments_types=None, bond_list=None, cylinder_radius_fraction=0.5, reset_view=True):
+                     connecting_segments_types=None, bond_list=None, cylinder_radius_fraction=0.5, reset_view=True, skip_list=None):
         """
         
             This is an example function for drawing an atomic configuration.
@@ -131,6 +131,7 @@ class VMDStream():
                     fraction      - Fraction of bead size for cylinder radius
                                      (default: 0.5)
                 Reset view        - recenter view every time step (True/False)
+                skip_list         - array of length n_beads, 0 if not skip, 1 if skip
 
         """
         natoms = len(configuration)
@@ -150,6 +151,7 @@ class VMDStream():
         if bond_list is not None:
             for link_idx in range(len(bond_list)):
                 i,j = bond_list[link_idx]
+                if skip_list is not None and (skip_list[i] or skip_list[j]):continue
                 if color_list is not None:
                     self.s.send("draw color %i\n"%(color_list[i]+VMDSTARTCOLOR))
                 elif atomtypes is not None:
@@ -163,6 +165,8 @@ class VMDStream():
                 self.s.send("draw cylinder {%f %f %f} {%f %f %f} radius %f resolution %i filled yes\n"%( configuration[i,0],configuration[i,1],configuration[i,2],configuration[j,0],configuration[j,1],configuration[j,2],this_radius*cylinder_radius_fraction,sphere_resolution) )
 
         for i in range(len(configuration)):
+            if skip_list is not None and skip_list[i]:continue
+
             if color_list is not None:
                 self.s.send("draw color %i\n"%(color_list[i]+VMDSTARTCOLOR))
             elif atomtypes is not None:
@@ -324,7 +328,7 @@ remote_ctl::putlog "telnet localhost %(PORT)s"
 remote_ctl::start
 """%{'PORT':port}
 
-def vmdstart(command_script="remote_ctl.tcl",port=5555):
+def vmdstart(command_script="remote_ctl.tcl",port=5555, vmd_exe="vmd"):
     """
         Start a VMD session
 
@@ -339,7 +343,7 @@ def vmdstart(command_script="remote_ctl.tcl",port=5555):
 
     """
     open(command_script,'w').write( ctl_script(port) )
-    cmd = subprocess.Popen("vmd -e "+command_script,shell=True)
+    cmd = subprocess.Popen("%s -e "%vmd_exe+command_script,shell=True)
     time.sleep(5)
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     for i in range(5):
