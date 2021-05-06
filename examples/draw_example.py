@@ -76,7 +76,7 @@ def load_xyzfile(xyzfile):
     return trajectory, atomtype_list, boxsize_list
 
 def divider():
-    print "-"*80
+    print("-"*80)
 
 def main():
     """
@@ -84,23 +84,23 @@ def main():
         This function has a series of examples of how to use the pyvmdstream library
 
     """
-    print "Warning, this program should write out files named test_frame_%%i.* in the current directory"
-    kbd_input = raw_input("Press Enter to continue, To cancel, press Ctrl-C or type anything else before pressing enter\n")
-    if kbd_input is not "":
-        print "Execution canceled"
+    print("Warning, this program should write out files named test_frame_%%i.* in the current directory")
+    kbd_input = input("Press Enter to continue, To cancel, press Ctrl-C or type anything else before pressing enter\n")
+    if not kbd_input == "":
+        print("Execution canceled")
         sys.exit()
 
     ##################
     # simple example #
     ##################
     divider()
-    print "First, a very simple example of how to use the interface"
+    print("First, a very simple example of how to use the interface")
     divider()
 
     # create a new connection to vmd 
     s = pyvmdstream.vmdstart(port=5556)
     # send a command to vmd
-    s.send("draw sphere {0 0 0} radius 1 resolution 30\n")
+    s.send("draw sphere {0 0 0} radius 1 resolution 30\n".encode())
     # wait so you can see the result
     time.sleep(3)
     # stop the connection to vmd
@@ -110,7 +110,7 @@ def main():
     # VMDStream examples #
     ######################
 
-    print "Now, examples using a sample VMDStream class"
+    print("Now, examples using a sample VMDStream class")
     divider()
 
     # load configuration
@@ -120,7 +120,7 @@ def main():
     # create a new VMDStream object
     vmdstream = pyvmdstream.VMDStream()
 
-    print "Drawing plain configuration"
+    print("Drawing plain configuration")
     divider()
 
     # draw a very plain rendering of configuration 0
@@ -130,34 +130,34 @@ def main():
     # set a pair of radii for the two atomtypes in the sample input
     radii = np.array((0.45,0.35))
 
-    print "Drawing configuration colored by atomtype, and with correct sizes"
+    print("Drawing configuration colored by atomtype, and with correct sizes")
     divider()
     # render the scene specifying atomtypes for each atom, and radii for the two atomtypes 
     vmdstream.draw_atomic( trajectory[0], atomtype_list[0],radii=radii )
     time.sleep(2)
 
-    print "Coloring randomly by color id"
+    print("Coloring randomly by color id")
     divider()
     # Pick random colors in the range 0-1023 for the N atoms
     random_color_list = np.random.randint(1024,size=len(trajectory[0]))
     vmdstream.draw_atomic( trajectory[0], atomtype_list[0],color_list=random_color_list,radii=radii )
     time.sleep(2)
 
-    print "Coloring randomly by color values in 0-1"
+    print("Coloring randomly by color values in 0-1")
     divider()
     # Pick random values in the range 0-1 ( which will be converted to color id's in the range 0-1023 ) for the N atoms
     random_values_list = np.random.random(size=len(trajectory[0]))
     vmdstream.draw_atomic( trajectory[0], atomtype_list[0],color_value_list=random_values_list,radii=radii )
     time.sleep(2)
 
-    print "Coloring by atom type but random radius sizes"
+    print("Coloring by atom type but random radius sizes")
     divider()
     # Choose random sizes for all N particles, color by atomtype "
     random_radii = 0.2+0.4*np.random.random(size=len(trajectory[0]))
     vmdstream.draw_atomic( trajectory[0], atomtype_list[0],radius_list=random_radii )
     time.sleep(2)
 
-    print "Now make a small movie with frame 2, changing colors and radii with postition and time"
+    print("Now make a small movie with frame 2, changing colors and radii with postition and time")
     divider()
 
     # set the color scheme to one from matplotlib, "jet" by default

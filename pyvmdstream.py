@@ -59,7 +59,7 @@ def cmap_discretize(N,cmap="jet"):
     indices = np.linspace(0, 1., N+1)
     cdict = {}
     for ki,key in enumerate(('red','green','blue')):
-        cdict[key] = [ (indices[i], colors_rgba[i-1,ki], colors_rgba[i,ki]) for i in xrange(N+1) ]
+        cdict[key] = [ (indices[i], colors_rgba[i-1,ki], colors_rgba[i,ki]) for i in range(N+1) ]
     # Return colormap object.
     return matplotlib.colors.LinearSegmentedColormap(cmap.name + "_%d"%N, cdict, 1024)
 
@@ -96,7 +96,7 @@ class VMDStream():
 
     def send(self,sendstring):
         """ Send a command directly to VMD """
-        self.s.send(sendstring)
+        self.s.send(sendstring.encode())
 
     def draw_atomic( self, configuration, atomtypes=None, default_radius=0.5,
                      radii=None, radius_list=None, color_list=None,
@@ -137,12 +137,12 @@ class VMDStream():
         natoms = len(configuration)
 
         #example initial setup
-        self.s.send('axes location off\n')
-        self.s.send('display projection orthographic\n')
-        self.s.send('display resize 800 800\n')
-        self.s.send("draw delete all\n")
-        self.s.send('draw materials on\n')
-        self.s.send('draw material "HardPlastic"\n')
+        self.send('axes location off\n')
+        self.send('display projection orthographic\n')
+        self.send('display resize 800 800\n')
+        self.send("draw delete all\n")
+        self.send('draw materials on\n')
+        self.send('draw material "HardPlastic"\n')
 
         if color_value_list is not None:
             # readjust color value list
@@ -153,24 +153,24 @@ class VMDStream():
                 i,j = bond_list[link_idx]
                 if skip_list is not None and (skip_list[i] or skip_list[j]):continue
                 if color_list is not None:
-                    self.s.send("draw color %i\n"%(color_list[i]+VMDSTARTCOLOR))
+                    self.send("draw color %i\n"%(color_list[i]+VMDSTARTCOLOR))
                 elif atomtypes is not None:
-                    self.s.send("draw color %i\n"%(atomtypes[i]))
+                    self.send("draw color %i\n"%(atomtypes[i]))
                 if radii is not None and atomtypes is not None:
                     this_radius = radii[atomtypes[i]]        
                 elif radius_list is not None:
                     this_radius = radius_list[i]
                 else:
                     this_radius = default_radius
-                self.s.send("draw cylinder {%f %f %f} {%f %f %f} radius %f resolution %i filled yes\n"%( configuration[i,0],configuration[i,1],configuration[i,2],configuration[j,0],configuration[j,1],configuration[j,2],this_radius*cylinder_radius_fraction,sphere_resolution) )
+                self.send("draw cylinder {%f %f %f} {%f %f %f} radius %f resolution %i filled yes\n"%( configuration[i,0],configuration[i,1],configuration[i,2],configuration[j,0],configuration[j,1],configuration[j,2],this_radius*cylinder_radius_fraction,sphere_resolution) )
 
         for i in range(len(configuration)):
             if skip_list is not None and skip_list[i]:continue
 
             if color_list is not None:
-                self.s.send("draw color %i\n"%(color_list[i]+VMDSTARTCOLOR))
+                self.send("draw color %i\n"%(color_list[i]+VMDSTARTCOLOR))
             elif atomtypes is not None:
-                self.s.send("draw color %i\n"%(atomtypes[i]))
+                self.send("draw color %i\n"%(atomtypes[i]))
 
             if radii is not None and atomtypes is not None:
                 this_radius = radii[atomtypes[i]]        
@@ -179,16 +179,16 @@ class VMDStream():
             else:
                 this_radius = default_radius
     
-            self.s.send("draw sphere {%f %f %f} radius %f resolution %i\n"%( configuration[i,0],configuration[i,1],configuration[i,2],this_radius,sphere_resolution) )
+            self.send("draw sphere {%f %f %f} radius %f resolution %i\n"%( configuration[i,0],configuration[i,1],configuration[i,2],this_radius,sphere_resolution) )
             if i+1<len(configuration) and connecting_segments_types is not None:
                 for connecting_segments_type in connecting_segments_types:
                     if atomtypes[i] == connecting_segments_type and atomtypes[i+1] == connecting_segments_type:
-                        self.s.send("draw cylinder {%f %f %f} {%f %f %f} radius %f resolution %i filled yes\n"%( configuration[i,0],configuration[i,1],configuration[i,2],configuration[i+1,0],configuration[i+1,1],configuration[i+1,2],this_radius*cylinder_radius_fraction,sphere_resolution) )
+                        self.send("draw cylinder {%f %f %f} {%f %f %f} radius %f resolution %i filled yes\n"%( configuration[i,0],configuration[i,1],configuration[i,2],configuration[i+1,0],configuration[i+1,1],configuration[i+1,2],this_radius*cylinder_radius_fraction,sphere_resolution) )
  
 
         if reset_view is True:
-            self.s.send('display resetview\n')
-            self.s.send('scale by 1.3\n')
+            self.send('display resetview\n')
+            self.send('scale by 1.3\n')
 
     def set_colorscale(self,colormap="jet",ncolors=VMDNCOLORS,startcolorid=VMDSTARTCOLOR):
         """
@@ -201,9 +201,9 @@ class VMDStream():
         """
         # reset vmd color scale
         # an alternative would be to change the colorscale in vmd, e.g.
-        #    self.s.send("color scale method GWR\n")
+        #    self.send("color scale method GWR\n")
         if colormap == "":
-            self.s.send("color scale method RGB\n")
+            self.send("color scale method RGB\n")
         else:
             # this is an obj that takes a number in zero to one and returns
             #   r g b intensity values
@@ -212,13 +212,13 @@ class VMDStream():
                 color_frac = float(i)/float(ncolors)
                 color_vals = colors(color_frac)[:3]
                 # set color startcolor+i to r g b value
-                self.s.send("color change rgb %i %0.3f %0.3f %0.3f\n"%( startcolorid+i,color_vals[0],color_vals[1],color_vals[2]) )
+                self.send("color change rgb %i %0.3f %0.3f %0.3f\n"%( startcolorid+i,color_vals[0],color_vals[1],color_vals[2]))
 
     def render_tachyon(self,file_prefix="test_frame",extra_commands=""):
         """ Render file via tachyon with current VMD defaults """
-        #self.s.send('render Tachyon %(FILE_PREFIX)s "/usr/local/lib/vmd/tachyon_LINUXAMD64" -aasamples 12 %%s -format TARGA -o %%s.tga\n'%{'FILE_PREFIX':file_prefix+'.dat'})
-        #self.s.send('render Tachyon %(FILE_PREFIX)s "tachyon" -aasamples 12 %%s -format TARGA -o %%s.tga\n'%{'FILE_PREFIX':file_prefix+'.dat'})
-        self.s.send('render Tachyon %(FILE_PREFIX)s "/software/vmd-1.9.2-x86_64/lib/tachyon_LINUXAMD64" %(EXTRA_COMMANDS)s -aasamples 12 %%s -format TARGA -o %%s.tga\n'%{'FILE_PREFIX':file_prefix+'.dat','EXTRA_COMMANDS':extra_commands})
+        #self.send('render Tachyon %(FILE_PREFIX)s "/usr/local/lib/vmd/tachyon_LINUXAMD64" -aasamples 12 %%s -format TARGA -o %%s.tga\n'%{'FILE_PREFIX':file_prefix+'.dat'})
+        #self.send('render Tachyon %(FILE_PREFIX)s "tachyon" -aasamples 12 %%s -format TARGA -o %%s.tga\n'%{'FILE_PREFIX':file_prefix+'.dat'})
+        self.send('render Tachyon %(FILE_PREFIX)s "/software/vmd-1.9.2-x86_64/lib/tachyon_LINUXAMD64" %(EXTRA_COMMANDS)s -aasamples 12 %%s -format TARGA -o %%s.tga\n'%{'FILE_PREFIX':file_prefix+'.dat','EXTRA_COMMANDS':extra_commands})
 
 def ctl_script(port):
     """
@@ -348,13 +348,13 @@ def vmdstart(command_script="remote_ctl.tcl",port=5555, vmd_exe="vmd"):
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     for i in range(5):
         try:
-	    s.connect(("127.0.0.1",port))
-        except Exception, e:
+            s.connect(("127.0.0.1",port))
+        except Exception as e:
             if e.errno == 106 or e.errno == 56:
                 #already connected
                 break
             else:
-                print e
+                print(e)
         time.sleep(2)
     return s
 
@@ -369,6 +369,6 @@ def vmdstop(s):
             s=SOCKET - an open python socket object
 
     """
-    s.send("exit\n")
+    s.send("exit\n".encode())
     s.close()
 
